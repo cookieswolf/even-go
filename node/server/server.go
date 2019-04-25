@@ -6,6 +6,7 @@ package server
 //go:generate protoc --proto_path=proto --go_out=plugins=grpc:api crypto.proto
 //go:generate protoc --proto_path=proto --go_out=plugins=grpc:api smartcontract.proto
 //go:generate protoc --proto_path=proto --go_out=plugins=grpc:api wallet.proto
+//go:generate protoc --proto_path=proto --go_out=plugins=grpc:api multichain.proto
 
 import (
 	"fmt"
@@ -26,14 +27,15 @@ func Run(port int) {
 	}
 
 	var (
-		cryptoHandler = handlers.Crypto{}
-		smartHandler  = handlers.SmartContract{}
-		filesHandler = handlers.FilesHandler{}
-		peerHandler  = handlers.PeersHandler{}
+		grpcServer = grpc.NewServer()
+
+		cryptoHandler      = handlers.Crypto{}
+		filesHandler       = handlers.FilesHandler{}
+		multichainHandler  = handlers.Multichain{}
+		peerHandler        = handlers.PeersHandler{}
+		smartHandler       = handlers.SmartContract{}
 		transactionHandler = handlers.Transaction{}
 		walletHandler      = handlers.Wallet{}
-
-		grpcServer = grpc.NewServer()
 	)
 
 	api.RegisterCryptoServer(grpcServer, &cryptoHandler)
@@ -42,6 +44,7 @@ func Run(port int) {
 	api.RegisterPeersServer(grpcServer, &peerHandler)
 	api.RegisterTransactionServer(grpcServer, &transactionHandler)
 	api.RegisterWalletServer(grpcServer, &walletHandler)
+	api.RegisterBalanceServer(grpcServer, &multichainHandler)
 
 	// start the server
 	if err := grpcServer.Serve(lis); err != nil {

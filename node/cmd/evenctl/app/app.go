@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	walletSpec  = "--name ... --password ..."
-	accountSpec = "--name ... --password ... --account ..."
+	walletSpec        = "--name ... --password ..."
+	accountSpec       = "--name ... --password ... --account ..."
+	mchainBalanceSpec = "--list ..."
 )
 
 // Init initializes the application.
@@ -23,8 +24,8 @@ func Close() {
 }
 
 // Run starts the application.
-
 func Run() (err error) {
+
 	defer func() {
 		if r := recover(); r != nil {
 			err = r.(error)
@@ -57,7 +58,9 @@ func Run() (err error) {
 		config.Command("info", "show some information about wallet", cmdWalletInfo)
 	})
 
-	//TODO create cmd command for files and peers
+	a.Command("multichain", "fetch blockchain data", func(config *cli.Cmd) {
+		config.Command("balance", "show current balance for specified address", cmdMchainAddrBalance)
+	})
 
 	return a.Run(os.Args)
 }
@@ -206,5 +209,15 @@ func cmdWalletInfo(c *cli.Cmd) {
 	c.Spec = walletSpec
 	c.Action = func() {
 		tool.Must(rpc.GetWalletInfo(*name, *password))
+	}
+}
+
+func cmdMchainAddrBalance(c *cli.Cmd) {
+	var (
+		list = c.StringsOpt("l list", []string{""}, "address list csv")
+	)
+	c.Spec = mchainBalanceSpec
+	c.Action = func() {
+		tool.Must(rpc.AddrBalance(*list))
 	}
 }
